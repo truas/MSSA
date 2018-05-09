@@ -13,6 +13,7 @@ PRECISION_COS = 7
 
 #self-packages
 import wordnet_module.my_data as md
+import wordnet_module.synset_tracker as st
 #from wordnet_module.my_data import PrimeData
 
 def cosine_similarity(v1, v2):
@@ -32,40 +33,46 @@ def cosine_distance(v1, v2):
 
 def make_bsd(words_data, refi_flag=False):
     last_index = (len(words_data)-1)
-    for index, wd in enumerate(words_data):
-        current = wd.drefi
-        alfa = 0.0
-        beta = 0.0
-        #prepare former, latter and current wordsdata to be evaluated
-        if (index > 0) and (index < last_index ) : #middle words
-            former = words_data[index-1].drefi
-            latter = words_data[index+1].drefi
-            if not refi_flag:
-                alfa, sys_a = defidata_gloss_avg_handler(current, former)
-                beta, sys_b = defidata_gloss_avg_handler(current, latter)
+    
+    if(len(words_data)==1):#if single-word-document pick MCS to represent it
+        only_sys = st.synset_all(words_data[last_index].word)
+        sys = md.PrimeData(only_sys[0], only_sys[0].offset(), only_sys[0].pos())
+        words_data[last_index].prime_sys = sys
+    else:#to-do: implement single-word-document for refinement model
+        for index, wd in enumerate(words_data):
+            current = wd.drefi
+            alfa = 0.0
+            beta = 0.0
+            #prepare former, latter and current wordsdata to be evaluated
+            if (index > 0) and (index < last_index ) : #middle words
+                former = words_data[index-1].drefi
+                latter = words_data[index+1].drefi
+                if not refi_flag:
+                    alfa, sys_a = defidata_gloss_avg_handler(current, former)
+                    beta, sys_b = defidata_gloss_avg_handler(current, latter)
+                else:
+                    alfa, sys_a = refidata_vector_handler(current, former)
+                    beta, sys_b = refidata_vector_handler(current, latter)           
+            elif index == 0: #first word
+                #former = None
+                latter = words_data[index+1].drefi
+                alfa, sys_a = defidata_gloss_avg_handler(current, latter) if not refi_flag else refidata_vector_handler(current, latter)
+       
+            else:#last word
+                #latter = None
+                former = words_data[index-1].drefi
+                alfa, sys_a = defidata_gloss_avg_handler(current, former) if not refi_flag else refidata_vector_handler(current, former)
+    
+            #pick the highest cosine-prime_obj   
+            if alfa > beta:
+                sys = sys_a
+            elif beta > alfa:
+                sys = sys_b
             else:
-                alfa, sys_a = refidata_vector_handler(current, former)
-                beta, sys_b = refidata_vector_handler(current, latter)           
-        elif index == 0: #first word
-            #former = None
-            latter = words_data[index+1].drefi
-            alfa, sys_a = defidata_gloss_avg_handler(current, latter) if not refi_flag else refidata_vector_handler(current, latter)
-   
-        else:#last word
-            #latter = None
-            former = words_data[index-1].drefi
-            alfa, sys_a = defidata_gloss_avg_handler(current, former) if not refi_flag else refidata_vector_handler(current, former)
-
-        #pick the highest cosine-prime_obj   
-        if alfa > beta:
-            sys = sys_a
-        elif beta > alfa:
-            sys = sys_b
-        else:
-            pick_random = [sys_a, sys_b]
-            sys = random.choice(pick_random)
-        
-        wd.prime_sys = sys
+                pick_random = [sys_a, sys_b]
+                sys = random.choice(pick_random)
+            
+            wd.prime_sys = sys
         
     return(words_data)    
 #evaluates which SID represents a word considering its context of +1 and -1
