@@ -21,6 +21,10 @@ COMMAND LINE (refi_manage.py) :
 
 UPDATES:
 ==========
+[2018-05-09]
+1. Fix: If document has only one word we pick the Most Common Sense  (MCS) to represent that word (single-word-document). Only for normal approach (wn_manage.py - uses word2vec)
+2. To-Do: Implement the same thing for refinement approach (refi_manage - uses synset2vec)
+
 [2018-04-24]
 1. Circular references fixed
 2. No need to use PYTHONPATH=.. anymore
