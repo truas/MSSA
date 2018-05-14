@@ -75,16 +75,14 @@ if __name__ == '__main__':
     ou_foname = os.path.join(pydir_name, '../'+output_folder)
     mo_foname = os.path.join(pydir_name, '../'+model_folder)
     
-    #Loads
-    trained_w2v_model = gensim.models.KeyedVectors.load_word2vec_format(mo_foname, binary=True) #If the model is not binary set binary=False - general raw-google-model
-    
+    #Loads#If the model is not binary set binary = False - seed: raw-google-model
+    trained_w2v_model = gensim.models.KeyedVectors.load_word2vec_format(mo_foname, binary=True) 
 
     
     #Input list of documents - one or many folders
     documents_list = prep.doclist_multifolder(in_foname)
     doc_names = prep.fname_splitter(documents_list) #remember to adjust the splitter depending on the OS
     counter = 0 #counter for document-name
-    
 
 #===============================================================================
 # ALFA Block: Context (make_bsd) or Dijkstra (make_bsd_dijkstra) use COST measure as CosineDistance
@@ -97,14 +95,14 @@ if __name__ == '__main__':
             doc_words = prep.simple_textclean(document, en_stop, tokenizer) 
             print('TextClean for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
             
-            doc_obj.wordsdata = tp.build_word_data(doc_words, trained_model = trained_w2v_model) #refi_flag=False - default
+            doc_obj.wordsdata = tp.build_word_data(doc_words, trained_w2v_model, refi_flag=False) #refi_flag=False - default
             print('WordData for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
              
-            doc_obj.wordsdata = tp.gloss_average_np(doc_obj.wordsdata, trained_w2v_model) #calculate the average for gloss using word embeddings model (word2vec)
+            doc_obj.wordsdata = tp.gloss_average_vector(doc_obj.wordsdata, trained_w2v_model) #calculate the average for gloss using word embeddings model (word2vec)
             print('DefiData for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
           
-            doc_obj.wordsdata = veop.make_bsd(doc_obj.wordsdata) #disambiguating words using Former-Latter cosine of synet-glosses-vectors(words) from word embeddings  #refi_flag = False - default
-            # doc_obj.wordsdata = veop.make_bsd_dijkstra(doc_obj.wordsdata) #disambiguating synet-glosses-vectors(words) using Dijkstra 
+            doc_obj.wordsdata = veop.make_bsd(doc_obj.wordsdata, refi_flag=False) #disambiguating words using Former-Latter cosine of synet-glosses-vectors(words) from word embeddings  #refi_flag = False - default
+            # doc_obj.wordsdata = veop.make_bsd_dijkstra(doc_obj.wordsdata, refi_flag=False) #disambiguating synet-glosses-vectors(words) using Dijkstra 
             print('PrimeBSDData for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
              
             posp.bsid_ouput_file(doc_obj.wordsdata, doc_names[counter], ou_foname) #produce the BSD for every word in the document

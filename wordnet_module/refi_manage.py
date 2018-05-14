@@ -102,7 +102,7 @@ if __name__ == '__main__':
             print('WordData for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
                     
             doc_obj.wordsdata = veop.make_bsd(doc_obj.wordsdata, refi_flag=True) #disambiguating words using Former-Latter cosine of synet-glosses-vectors(words) from word embeddings
-            #doc_obj.wordsdata = veop.make_bsd_dijkstra(doc_obj.wordsdata) #disambiguating synet-glosses-vectors(words) using Dijkstra 
+            #doc_obj.wordsdata = veop.make_bsd_dijkstra(doc_obj.wordsdata, refi_flag=True) #disambiguating synet-glosses-vectors(words) using Dijkstra 
             print('PrimeBSDData for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
              
             posp.bsid_ouput_file(doc_obj.wordsdata, doc_names[counter], ou_foname) #produce the BSD for every word in the document

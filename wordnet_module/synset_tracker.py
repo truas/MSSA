@@ -5,10 +5,34 @@
 from nltk.corpus import wordnet as wn
 
 #self-packages
-from my_data import DefiData  # @UnresolvedImport
-from my_data import RefiData  # @UnresolvedImport
+from my_data import SynsetData  # @UnresolvedImport
 from text_module import text_process as tp # @UnresolvedImport
 
+
+def build_synset_data(word, embed_model, refi_flag, *pos):
+    synsets_data = []
+    if not pos:#for all POS
+        synsets = synset_all(word)
+    else:#for specific POS
+        synsets = synset_pos(word,pos)  
+    
+    for sys_element in synsets:#create list of Synsets, offset, POS
+        if refi_flag: #using refinement model
+            key = tp.key_parser(word, sys_element.offset(), sys_element.pos())
+            vec = retrieve_synsetvec(key, embed_model)
+            #initialize RefiData with retrieved vector-value
+            tmp_refi = SynsetData(sys_element, sys_element.offset(), sys_element.pos(), sys_element.definition())
+            tmp_refi.vector = vec
+            synsets_data.append(tmp_refi)
+        else:#using normal mode
+            synsets_data.append(SynsetData(sys_element, sys_element.offset(), sys_element.pos(), sys_element.definition()))
+    
+    return(synsets_data)
+#Creates the package for each synset for each given word
+
+#===============================================================================
+# Retrieve stuff from WordNet and Model
+#===============================================================================
 
 def synset_all(word):
     return wn.synsets(word)  # @UndefinedVariable
@@ -17,39 +41,6 @@ def synset_all(word):
 def synset_pos(word, cat):
     return wn.synsets(word, cat)  # @UndefinedVariable
 #synsets for specific POS
-   
-def build_synset_dict(word, pos=None):
-    synset_defidata_list = []
-
-    if not pos:#for all POS
-        synsets = synset_all(word)
-    else:#for specific POS
-        synsets = synset_pos(word,pos)
-    
-    for sys_element in synsets:#create list of Synsets, offset, POS and their glosses - DefiObject
-        synset_defidata_list.append(DefiData(sys_element, sys_element.offset(), sys_element.pos(), sys_element.definition()))
-
-    return(synset_defidata_list)
-#list of SYNSET:OFFSET:POS:GLOSS based on DefiData
-
-def build_refi_synset_dict(word, embed_model, *pos):
-    synset_refidata_list = []
-
-    if not pos:#for all POS
-        synsets = synset_all(word)
-    else:#for specific POS
-        synsets = synset_pos(word,pos)
-    
-    for sys_element in synsets:#create list of Synsets, offset, POS
-        key = tp.key_parser(word, sys_element.offset(), sys_element.pos())
-        tmp_vec = retrieve_synsetvec(key, embed_model)
-        #initialize RefiData with retrieved vector-value
-        tmp_refi = RefiData(sys_element, sys_element.offset(), sys_element.pos())
-        tmp_refi.vector = tmp_vec
-        synset_refidata_list.append(tmp_refi)
-
-    return(synset_refidata_list)
-#list of SYNSET:OFFSET:POS:GLOSS based on DefiData
 
 def retrieve_synsetvec(key, model):
     try:
@@ -58,10 +49,6 @@ def retrieve_synsetvec(key, model):
         tmp_vec = [0.0] #key not in the model
     return(tmp_vec)
 #returns the dimension/values of a key in a word-embedding model
-
-#===============================================================================
-# TEST CASE
-#===============================================================================
 
 #===============================================================================
 # def print_type_feature(word):

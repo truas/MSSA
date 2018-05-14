@@ -19,7 +19,7 @@ def bsd_dijkstra_index(words_data, index_cost):
     num_words = len(words_data)
     #object that contains the index
     
-    for defi_initial in words_data[0].drefi:#node contianing DefiData(Synset,offset,pos,gloss,average_gloss
+    for defi_initial in words_data[0].synset_pack:#node contianing DefiData(Synset,offset,pos,gloss,average_gloss
         heappush(queue, (0, 0, [defi_initial])) # (queue,(weight, word_no, path)) - put the first word-node in the queue heap
         
     while queue:#as long we have something on the queue do
@@ -39,7 +39,7 @@ def bsd_dijkstra_index(words_data, index_cost):
         
         from_node_map = validate_map_dimension(path[-1].pos, path[-1].offset, index_cost) #retrieve synset from index-cost map
         
-        for defi_final in words_data[word_no].drefi: #for all DefiData(synsets-gloss-avg) in the current node
+        for defi_final in words_data[word_no].synset_pack: #for all DefiData(synsets-gloss-avg) in the current node
             #diff = cosine_distance(path[-1].gloss_avg_vec, defi_final.gloss_avg_vec) #cost from previous node to new node 
             
             if from_node_map is False:
@@ -55,24 +55,24 @@ def bsd_dijkstra_index(words_data, index_cost):
 def bsd_index(words_data, index_cost):
     last_index = (len(words_data)-1)
     for index, wd in enumerate(words_data):
-        current = wd.drefi
+        current = wd.synset_pack
          
         alfa = 1.0
         beta = 1.0
                     
         #prepare former, latter and current wordsdata to be evaluated
         if (index > 0) and (index < last_index ) : #middle words
-            former = words_data[index-1].drefi
-            latter = words_data[index+1].drefi
+            former = words_data[index-1].synset_pack
+            latter = words_data[index+1].synset_pack
             alfa, sys_a = defidata_index_handler(current, former, index_cost)
             beta, sys_b = defidata_index_handler(current, latter, index_cost)  
         elif index == 0: #first word
             #former = None
-            latter = words_data[index+1].drefi
+            latter = words_data[index+1].synset_pack
             alfa, sys_a = defidata_index_handler(current, latter, index_cost)           
         else:#last word
             #latter = None
-            former = words_data[index-1].drefi
+            former = words_data[index-1].synset_pack
             alfa, sys_a = defidata_index_handler(current, former, index_cost)
  
         #pick the highest cosine-prime_obj   
