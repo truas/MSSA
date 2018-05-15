@@ -118,11 +118,11 @@ def synset_data_handler(prime, not_prime, refi_flag):
         for evaluated in not_prime:
             
             if refi_flag:
-                needle = current.gloss_avg_vec
-                pencil = evaluated.gloss_avg_vec
-            else:
                 needle = current.vector
-                pencil = evaluated.vector  
+                pencil = evaluated.vector
+            else:
+                needle = current.gloss_avg_vec
+                pencil = evaluated.gloss_avg_vec  
              
             tmp_highest = cosine_similarity(needle, pencil) #using gloss-average cosine
             
