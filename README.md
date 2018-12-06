@@ -17,8 +17,9 @@ COMMAND LINE (wn_manage.py) :
 
 - <--input> : Input folder with .txt files or folders with .txt
 - <--output>: Ouput folder where the files will be saved
-- <--recur> : [OPTIONAL  and case sensitive] True (default): Use synset-embeddings; False: Use word-embeddings;
-- <--abase> : [OPTIONAL and case sensitive] True (default): Disambiguation via Base MSSA; False - Disambiguation via Dijkstra
+- <--recur> : [OPTIONAL  and case sensitive] True (default): Use synset-embeddings (trained on the output of this algorithm); False: Use word-embeddings (e.g. GoogleNews);
+  - Important: The synset embeddings consider this structure *word#offset#pos* as keys. However, to make things more flexible, the ouput of this program produces *word\tsynset\toffset\tpos*. Pleave refer to BSD_Parser to filter/parser the components you require;
+- <--abase> : [OPTIONAL and case sensitive] True (default): Disambiguation via Base MSSA; False - Disambiguation via Dijkstra;
 - <--model>: Word-Embedding (e.g. GoogleNews) OR Synset-Embbedding model used. This should be in .vector format, but it can be changed to binary. Synset-Embbeddings consider the following canonical format: *word#offset#pos* . These are the keys to look up the embeddings.
 
 UPDATES:
