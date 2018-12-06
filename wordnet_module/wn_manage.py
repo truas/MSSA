@@ -6,26 +6,26 @@ Important:
 '''
 #import
 import logging
-import gensim
 import time
 import nltk
 import sys
 import argparse #for command line arguments
 import os
+import distutils.util as util
 
 #python module absolute path
 pydir_name = os.path.dirname(os.path.abspath(__file__))
-
+ppydir_name = os.path.dirname(pydir_name)
 #python path definition
-sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
+sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 #from-imports
 from datetime import timedelta
 from stop_words import get_stop_words
 
+
 #self-packages
 import general_module.index_cost_op as icop #wordnet index cost
-import general_module.struct_op as suop
 import general_module.vector_op as veop #cosine_cost
 import text_module.pos_process as posp
 import text_module.pre_process as prep
@@ -33,11 +33,6 @@ import text_module.text_process as tp
 
 from distance_reader import DistanceReader #in case of index-cost is used @UnresolvedImport
 from my_data import DocData  # @UnresolvedImport
-
-#input/output files/folder - If you need to set input, output and model folders
-#in_foname = "C:/tmp_project/BSDExtractor/input"
-#ou_foname = "C:/tmp_project/BSDExtractor/output"
-#mo_foname = "C:/tmp_project/BSDExtractor/model/GoogleNews-vectors-negative300.bin" #binary true
 
 #DISTANCES_files_path = 'C:/tmp_datasets/Wordnet/dict_map' #in case index-cost is used
 
@@ -61,57 +56,66 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="BSD_Extractor - Transforms text into synsets")
     parser.add_argument('--input', type=str, action='store', dest='inf', metavar='<folder>', required=True, help='input folder to read document(s)')
     parser.add_argument('--output', type=str, action='store', dest='ouf', metavar='<folder>', required=True, help='output folder to write document(s)')
-    parser.add_argument('--model', type=str, action='store', dest='mod', metavar='<folder>', required=True, help='trained word embeddings model')
-      
+    parser.add_argument('--model', type=str, action='store', dest='mod', metavar='<parameter>', required=True, help='trained word embeddings model')
+    parser.add_argument('--recur', type=util.strtobool, action='store', dest='rec', metavar='<parameter>', required=False, help='[optional] selects type of embeddings is use: [false] word-based or [true] synset-based <default>')
+    parser.add_argument('--abase', type=util.strtobool, action='store', dest='aba', metavar='<parameter>', required=False, help='[optional] selects between [true] Base algorithm <default> or [false] Dijkstra')  
+       
     args = parser.parse_args()
-        
+         
     #COMMAND LINE  folder paths
     input_folder = args.inf
     output_folder = args.ouf
     model_folder = args.mod
-      
+    recur_type = args.rec
+    abase_type = args.aba
+       
     #in/ou relative location - #input/output/model folders are under synset/module/
-    in_foname = os.path.join(pydir_name, '../'+input_folder) 
-    ou_foname = os.path.join(pydir_name, '../'+output_folder)
-    mo_foname = os.path.join(pydir_name, '../'+model_folder)
+    in_foname = os.path.join(ppydir_name,input_folder) 
+    ou_foname = os.path.join(ppydir_name,output_folder)
+    mo_foname = os.path.join(ppydir_name,model_folder)
     
-    #Loads#If the model is not binary set binary = False - seed: raw-google-model
-    trained_w2v_model = gensim.models.KeyedVectors.load_word2vec_format(mo_foname, binary=True) 
-
+    #===========================================================================
+    # #IDE - Path Definitions
+    # #input/output files/folder - If you need to set input, output and model folders
+    # in_foname = "C:/tmp_project/BSDExtractor/input/ag_news/train"
+    # ou_foname = "C:/tmp_project/BSDExtractor/output/ag_news/trainout"
+    # mo_foname = "C:/Users/terry/Documents/Datasets/GoogleNews/GoogleNews-vectors-negative300.bin" #binary true
+    # recur_type = True
+    # abase_type = True
+    #===========================================================================
+    
+    #Verifying which Token Model to use and 
+    token_model_embeddings = prep.checkModelLoad(mo_foname, recur_type)
+    recurrent_algorithm = prep.checkAlgorithmCost(abase_type) #prevents invalid input
     
     #Input list of documents - one or many folders
     documents_list = prep.doclist_multifolder(in_foname)
     doc_names = prep.fname_splitter(documents_list) #remember to adjust the splitter depending on the OS
-    counter = 0 #counter for document-name
 
 #===============================================================================
 # ALFA Block: Context (make_bsd) or Dijkstra (make_bsd_dijkstra) use COST measure as CosineDistance
 #===============================================================================
-
-    for document in documents_list:
+    for counter, document in enumerate(documents_list):
         try:
             doc_obj = DocData()
             
             doc_words = prep.simple_textclean(document, en_stop, tokenizer) 
-            print('TextClean for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
+            #print('TextClean for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
             
-            doc_obj.wordsdata = tp.build_word_data(doc_words, trained_w2v_model, refi_flag=False) #refi_flag=False - default
-            print('WordData for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
+            doc_obj.wordsdata = tp.build_word_data(doc_words, token_model_embeddings, recurrent_algorithm) #refi_flag=False - default
+            #print('WordData for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
              
-            doc_obj.wordsdata = tp.gloss_average_vector(doc_obj.wordsdata, trained_w2v_model) #calculate the average for gloss using word embeddings model (word2vec)
-            print('DefiData for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
+            doc_obj.wordsdata = tp.gloss_average_vector(doc_obj.wordsdata, token_model_embeddings, recurrent_algorithm) #calculate the average for gloss using word embeddings model (word2vec)
+            #print('DefiData for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
           
-            doc_obj.wordsdata = veop.make_bsd(doc_obj.wordsdata, refi_flag=False) #disambiguating words using Former-Latter cosine of synet-glosses-vectors(words) from word embeddings  #refi_flag = False - default
-            # doc_obj.wordsdata = veop.make_bsd_dijkstra(doc_obj.wordsdata, refi_flag=False) #disambiguating synet-glosses-vectors(words) using Dijkstra 
-            print('PrimeBSDData for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
+            doc_obj.wordsdata = veop.mssaSelector(doc_obj.wordsdata, recurrent_algorithm)
+            #print('PrimeBSDData for Document %s - Done: %s' %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
              
             posp.bsid_ouput_file(doc_obj.wordsdata, doc_names[counter], ou_foname) #produce the BSD for every word in the document
-            print('Document %s - Saved: %s'  %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
-            counter+=1
-        
+            if (counter%3000==0): print('Document %s - Saved: %s'  %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
+            
         #simple try-catch to avoid documents with few words/null or documents which all items are not in our knowledge database - Skip those documents
         except IndexError:
-            counter+=1
             continue
     
     print('finished...')

@@ -7,12 +7,12 @@ from functools import total_ordering
 @total_ordering
 class SynsetData(object): 
     def __init__(self, sys_id, offset, pos, gloss):
-        self.sys_id = sys_id
+        self.sys_id = sys_id #the actual synset (as a whole)
         self.offset = offset
         self.pos = pos
         self.gloss = gloss
-        self.gloss_avg_vec = list() #the average vector fo that word-synset gloss
-        self.vector = [] 
+        self.gloss_avg_vec = list() #the average vector for that word-synset gloss
+        self.vector = [] #vector for this synset token in case our model is made out of synsets
     
     #Necessary methods to implement heapq from Dijkstra
     def __eq__(self, other):

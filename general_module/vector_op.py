@@ -7,6 +7,7 @@ import sys
 import random
 from scipy import spatial
 from heapq import heappush, heappop
+from nltk.corpus import wordnet as wn
 
 #Global - Definitions
 PRECISION_COS = 7
@@ -17,55 +18,70 @@ import wordnet_module.synset_tracker as st
 #from wordnet_module.my_data import PrimeData
 
 #===============================================================================
-# NewBSD  and DijkstraBSD
+# MSSA - Base
 #===============================================================================
-def make_bsd(words_data, refi_flag = False):
+def make_bsd(words_data, recurrent_flag):
     last_index = (len(words_data)-1)
-    
+    #print("mssa-running")
     if(len(words_data)==1):#if single-word-document pick MCS to represent it
-        only_sys = st.synset_all(words_data[last_index].word)
+        only_sys = wn.synsets(words_data[last_index].word)  # @UndefinedVariable
         sys = md.PrimeData(only_sys[0], only_sys[0].offset(), only_sys[0].pos())
         words_data[last_index].prime_sys = sys
     else:
         for index, wd in enumerate(words_data):
             current = wd.synset_pack
-            alfa = 0.0
-            beta = 0.0
-            #prepare former, latter and current wordsdata to be evaluated
-            if (index > 0) and (index < last_index ) : #middle words
-                former = words_data[index-1].synset_pack
-                latter = words_data[index+1].synset_pack
-             
-                alfa, sys_a = synset_data_handler(current, former, refi_flag)
-                beta, sys_b = synset_data_handler(current, latter, refi_flag)
-            
-            elif index == 0: #first word
-                #former = None
-                latter = words_data[index+1].synset_pack
-                alfa, sys_a = synset_data_handler(current, latter, refi_flag)
-       
-            else:#last word
-                #latter = None
-                former = words_data[index-1].synset_pack
-                alfa, sys_a = synset_data_handler(current, former, refi_flag)
-    
-            #pick the highest cosine-prime_obj   
-            if alfa > beta:
-                sys = sys_a
-            elif beta > alfa:
-                sys = sys_b
-            else:
-                pick_random = [sys_a, sys_b]
-                sys = random.choice(pick_random)
-            
-            wd.prime_sys = sys
+            # gets the best candidates for current x others (former and latter)   
+            alfa,sys_a,beta,sys_b = currentCandidates(current, words_data, index, last_index, recurrent_flag)
+            wd.prime_sys = currentSYS(alfa, beta, sys_a, sys_b)
         
     return(words_data)    
 #evaluates which SID represents a word considering its context of +1 and -1
 #refi_flag indicates if algorithm will consider the (defi) gloss-average vector (using raw-words model) or
 #it will consider (refi) synsets model (synset2vec)
 
-def make_bsd_dijkstra(words_data, refi_flag=False):
+def currentSYS(alfa, beta, sys_a, sys_b):
+    #picks the highest cosine-prime_obj   
+    if alfa > beta:
+        sys = sys_a
+    elif beta > alfa:
+        sys = sys_b
+    else:
+        pick_random = [sys_a, sys_b]
+        sys = random.choice(pick_random)
+    return(sys)
+#selects the synset for current with the highest cosine-sim value
+#based on its prospective candidates          
+
+def currentCandidates(current, words_data, index, last_index, recurrent_flag):
+    alfa = 0.0
+    beta = 0.0
+    sys_b = None
+    sys_a = None
+    #prepare former, latter and current wordsdata to be evaluated
+    if (index > 0) and (index < last_index ) : #middle words
+        former = words_data[index-1].synset_pack
+        latter = words_data[index+1].synset_pack
+      
+        alfa, sys_a = compareCurrentWithOther(current, former, recurrent_flag)
+        beta, sys_b = compareCurrentWithOther(current, latter, recurrent_flag)
+    elif index == 0: #first word
+        #former = None
+        latter = words_data[index+1].synset_pack
+        alfa, sys_a = compareCurrentWithOther(current, latter, recurrent_flag)
+    else:#last word
+        #latter = None
+        former = words_data[index-1].synset_pack
+        alfa, sys_a = compareCurrentWithOther(current, former, recurrent_flag)
+    
+    return(alfa,sys_a,beta,sys_b)
+#returns prospective synsets for current based on the FORMER and LATTER 
+#handles first and last element differently
+
+#===============================================================================
+# MSSA - DIJKSTRA - 
+#===============================================================================
+def make_bsd_dijkstra(words_data, refi_flag):
+    #print("dijkstra-running")
     queue = [] #[] literal is faster than list[] in theory
     seen = set() #visited nodes
     num_words = len(words_data)
@@ -106,35 +122,41 @@ def make_bsd_dijkstra(words_data, refi_flag=False):
 #===============================================================================
 # HANDLERs
 #===============================================================================
+def mssaSelector(wordsdata, recurrent_algorithm):
+    if(recurrent_algorithm):#MSSA-Base
+        mssa_wordsdata = make_bsd(wordsdata, recurrent_algorithm)#disambiguating words using Former-Latter cosine of synet-glosses-vectors(words) from word embeddings
+    else:#MSSA-DIJKSTRA
+        mssa_wordsdata = make_bsd_dijkstra(wordsdata, recurrent_algorithm)
+    return(mssa_wordsdata)#disambiguating synet-glosses-vectors(words) using Dijkstra 
+#selects with algorithms to run MSSA based on Former/Latter or MSSA based on DIJSKTRA
 
-def synset_data_handler(prime, not_prime, refi_flag):
+def compareCurrentWithOther(prime, not_prime, recurrent_flag):
     highest_so_far = sys.float_info.min #value of dist.cost (1 - cosine.similarity) to initialize    
-    sys_prime = prime[0].sys_id #just give a Synset to initialize it
-    offset_prime = prime[0].offset
-    pos_prime = prime[0].pos
-    
-    #keep the synsetdata with the highest cosine
+    tmp_prime = md.PrimeData(prime[0].sys_id,prime[0].offset,prime[0].pos )
+    #keep the synsetData with the highest cosine
     for current in prime:
-        for evaluated in not_prime:
-            
-            if refi_flag:
-                needle = current.vector
-                pencil = evaluated.vector
-            else:
-                needle = current.gloss_avg_vec
-                pencil = evaluated.gloss_avg_vec  
-             
-            tmp_highest = cosine_similarity(needle, pencil) #using gloss-average cosine
+        for evaluated in not_prime:  
+            needle,pencil = recoverSynsetVector(current, evaluated, recurrent_flag)  
+            tmp_highest = cosine_similarity(needle, pencil) 
             
             if tmp_highest > highest_so_far:
                 highest_so_far = tmp_highest
-                sys_prime = current.sys_id
-                offset_prime = current.offset
-                pos_prime = current.pos
-    
-    prime_obj = md.PrimeData(sys_prime, offset_prime, pos_prime)
-    return (highest_so_far, prime_obj)
+                tmp_prime.sys_prime = current.sys_id
+                tmp_prime.offset_prime = current.offset
+                tmp_prime.pos_prime = current.pos
+    return (highest_so_far, tmp_prime)
+#returns the synset with the highest value
 
+def recoverSynsetVector(current, not_current, recurrent_flag):
+    if(recurrent_flag):
+        needle = current.vector
+        pencil = not_current.vector
+    else:
+        needle = current.gloss_avg_vec
+        pencil = not_current.gloss_avg_vec
+    return(needle,pencil)    
+#returns the vectors for current and not_current (former or latter)
+#vector can be synset-based or gloss-avg-words based         
 
 #===============================================================================
 # Vector Operations - Similarity and distance

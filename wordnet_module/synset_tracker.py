@@ -8,47 +8,32 @@ from nltk.corpus import wordnet as wn
 from my_data import SynsetData  # @UnresolvedImport
 from text_module import text_process as tp # @UnresolvedImport
 
-
-def build_synset_data(word, embed_model, refi_flag, *pos):
+def build_synset_data(word, embed_model, refi_flag):
     synsets_data = []
-    if not pos:#for all POS
-        synsets = synset_all(word)
-    else:#for specific POS
-        synsets = synset_pos(word,pos)  
-    
+      
+    synsets = wn.synsets(word) # @UndefinedVariable
+    last_synset_added = -1 #to keep track of the last synset added for each word
     for sys_element in synsets:#create list of Synsets, offset, POS
-        if refi_flag: #using refinement model
+        synsets_data.append(SynsetData(sys_element, sys_element.offset(), sys_element.pos(), sys_element.definition()))#all synsets are added for each word regardless 
+        if refi_flag: #using recurrent model we retrieve the word-sense vector
             key = tp.key_parser(word, sys_element.offset(), sys_element.pos())
-            vec = retrieve_synsetvec(key, embed_model)
-            #initialize RefiData with retrieved vector-value
-            tmp_refi = SynsetData(sys_element, sys_element.offset(), sys_element.pos(), sys_element.definition())
-            tmp_refi.vector = vec
-            synsets_data.append(tmp_refi)
-        else:#using normal mode
-            synsets_data.append(SynsetData(sys_element, sys_element.offset(), sys_element.pos(), sys_element.definition()))
-    
+            vec = retrieveWordSynsetVector(key, embed_model)
+            synsets_data[last_synset_added].vector = vec
+        else:
+            pass
     return(synsets_data)
 #Creates the package for each synset for each given word
 
 #===============================================================================
 # Retrieve stuff from WordNet and Model
 #===============================================================================
-
-def synset_all(word):
-    return wn.synsets(word)  # @UndefinedVariable
-#synsets for all POS
-
-def synset_pos(word, cat):
-    return wn.synsets(word, cat)  # @UndefinedVariable
-#synsets for specific POS
-
-def retrieve_synsetvec(key, model):
+def retrieveWordSynsetVector(key, model):
     try:
         tmp_vec = model.word_vec(key)
     except KeyError:
         tmp_vec = [0.0] #key not in the model
     return(tmp_vec)
-#returns the dimension/values of a key in a word-embedding model
+#returns the dimension/values of a key in a token-embedding model
 
 #===============================================================================
 # def print_type_feature(word):

@@ -10,27 +10,28 @@ from stop_words import get_stop_words
 #self-packages
 import wordnet_module.my_data as md
 
-
-def build_word_data(words, trained_model, refi_flag=False):
+def build_word_data(words, trained_model, recurrent_flag):
     import wordnet_module.synset_tracker as systra 
     words_list = list()
    
     for word in words:
-        temp_data = systra.build_synset_data(word, trained_model, refi_flag) #refi_flag = True : Refinement; False:Normal        
+        temp_data = systra.build_synset_data(word, trained_model, recurrent_flag) #recurrent_flag = True : Refinement; False:Normal        
         if temp_data:
             tmp_word = md.WordsData(word)#initialize WordsData
             tmp_word.synset_pack = temp_data
             words_list.append(tmp_word)
         else:
             pass #no synset was mapped for this document
-        
     return(words_list)    
 #create a list of WordsData based on a iterable list of WORDS - Use RefiData or DefiData
-#refi_flag = true : Workinf with RefiData; false - working with DefiData
+#recurrent_flag = true : Workinf with RefiData; false - working with DefiData
 #if the word does not exist in WordNet or in the Model we move to the new word in the document
 
 
-def gloss_average_vector(words_data, trained_w2v_model):       
+def gloss_average_vector(words_data, token_model_embeddings, recurrent_flag):       
+    
+    if(recurrent_flag): return(words_data) #with synset-model is used there is no need to calculate gloss-avg-vector
+    
     temp_dict = {}#temporary dictionary to avoid repetitive gloss-vector average for each document(words-data)
     for w in words_data: #word-token from text
         for gloss_data in w.synset_pack: #list of synsets with their offset/pos/glosses
@@ -41,10 +42,10 @@ def gloss_average_vector(words_data, trained_w2v_model):
                 vecs = []
                 for gloss_token in gloss_tokens:
                     try:
-                        vec = trained_w2v_model.word_vec(gloss_token) #return the vector for the token in the gloss
+                        vec = token_model_embeddings.word_vec(gloss_token) #return the vector for the token in the gloss
                         vecs.append(vec) #make a list of all token-vector from the word embedding
                     except KeyError:
-                        pass
+                        pass #we do not want to average those non-existent vector. [0.0] should not count for the average
                 gloss_data.gloss_avg_vec = np.average(vecs, axis=0) #average all token-gloss-vectors in vecs - independent of the model dimensionality
                 temp_dict[gloss_data.sys_id] = gloss_data.gloss_avg_vec #add its synset:average-gloss-vector 
     return(words_data)           

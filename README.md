@@ -13,14 +13,24 @@ Transforms text files into synset word files considering WSD via glosses
 
 COMMAND LINE (wn_manage.py) :
 ==============
-	python3 wn_manage.py  --input <input-location> --output <output-location> --model <model-file>
+	python3 wn_manage.py  --input <input-location> --output <output-location> --recur <bool> --abase <bool> --model <model-file>
 
-COMMAND LINE (refi_manage.py) :
-==============
-	python3 refi_manage.py  --input <input-location> --output <output-location> --model <model-file>
+- <--input> : Input folder with .txt files or folders with .txt
+- <--output>: Ouput folder where the files will be saved
+- <--recur> : [OPTIONAL  and case sensitive] True (default): Use synset-embeddings; False: Use word-embeddings;
+- <--abase> : [OPTIONAL and case sensitive] True (default): Disambiguation via Base MSSA; False - Disambiguation via Dijkstra
+- <--model>: Word-Embedding (e.g. GoogleNews) OR Synset-Embbedding model used. This should be in .vector format, but it can be changed to binary. Synset-Embbeddings consider the following canonical format: *word#offset#pos* . These are the keys to look up the embeddings.
 
 UPDATES:
 ==========
+[2018-12-06]
+1. Refinement script removed. Everything is done via command line using wn_manage.py only
+2. New instructions added on how to run
+3. General refactoring
+4. Enhancement: Gloss-avg-vect was being calculated regardless if recurrent/refinement model was used (synset-embeddings). It doesn't affect the result, but add substantial computing time.
+5. Left some toy input files for testing
+
+
 [2018-05-14]
 1. Several refactoring performed
 2. If document parsed has not synset-tokens, this document won't be produced (output file is discarded)
