@@ -11,7 +11,7 @@ import gensim
 #===============================================================================
 
 def simple_textclean(fname, en_stop, tokenizer):
-    with open(fname, 'r', encoding='utf-8') as fin:
+    with open(fname, 'r', encoding='utf-8', error = 'ignore') as fin:
         contents = fin.read()
         # clean and tokenize document string
         raw = str(contents.lower())

@@ -24,13 +24,15 @@ COMMAND LINE (wn_manage.py) :
 
 UPDATES:
 ==========
+[2019-01-11]
+1. Ignore ASCII error when reading and cleaning files
+
 [2018-12-06]
 1. Refinement script removed. Everything is done via command line using wn_manage.py only
 2. New instructions added on how to run
 3. General refactoring
 4. Enhancement: Gloss-avg-vect was being calculated regardless if recurrent/refinement model was used (synset-embeddings). It doesn't affect the result, but add substantial computing time.
 5. Left some toy input files for testing
-
 
 [2018-05-14]
 1. Several refactoring performed
