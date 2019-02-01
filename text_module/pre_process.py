@@ -32,15 +32,19 @@ def simple_textclean(fname, en_stop, tokenizer):
 #===============================================================================
 def checkAlgorithmCost(algorithm_type=True):
     if(algorithm_type):
+        #print('checkAlgorithmCost: ', algorithm_type)
         return(True)
     else:
+        #print('checkAlgorithmCost: ', algorithm_type)
         return(False)
 #check which cost is used during Disambiguation: DIJKSTRA or MSSA Base (Default)
 
 def checkModelLoad(model_folder, model=True):
     if(model):
+        #print('chechModelLoad: ', model)
         token_embeddings_model = gensim.models.KeyedVectors.load(model_folder)
     else:
+        #print('chechModelLoad: ', model)
         token_embeddings_model = gensim.models.KeyedVectors.load_word2vec_format(model_folder, binary=True) #googlevector model
     return(token_embeddings_model)
 #checks which kind of word-embedding will be used WORD (Google) or SYNSET(MSSA)(default)
