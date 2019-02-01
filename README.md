@@ -24,6 +24,9 @@ COMMAND LINE (wn_manage.py) :
 
 UPDATES:
 ==========
+[2019-01-31]
+1. CommandLine class implemented - Refactor
+
 [2019-01-11]
 1. Ignore ASCII error when reading and cleaning files
 

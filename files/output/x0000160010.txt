@@ -1,1 +1,0 @@
-northern	Synset('northern.n.01')	6949207	n
