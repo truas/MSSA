@@ -1,0 +1,2 @@
+fire	Synset('fire.n.01')	7302836	n
+ball	Synset('ball.n.01')	2778669	n

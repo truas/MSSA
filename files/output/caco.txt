@@ -1,0 +1,1 @@
+ball	Synset('ball.n.01')	2778669	n

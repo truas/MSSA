@@ -16,6 +16,7 @@ import distutils.util as util
 #python module absolute path
 pydir_name = os.path.dirname(os.path.abspath(__file__))
 ppydir_name = os.path.dirname(pydir_name)
+
 #python path definition
 sys.path.append(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
@@ -31,6 +32,7 @@ import text_module.pos_process as posp
 import text_module.pre_process as prep
 import text_module.text_process as tp
 
+from text_module.commandLine import CommandLine
 from distance_reader import DistanceReader #in case of index-cost is used @UnresolvedImport
 from my_data import DocData  # @UnresolvedImport
 
@@ -51,28 +53,12 @@ start_time = time.monotonic()
 
 #Main core
 if __name__ == '__main__':  
-    
-    #IF you want to use COMMAND LINE for folder path
-    parser = argparse.ArgumentParser(description="BSD_Extractor - Transforms text into synsets")
-    parser.add_argument('--input', type=str, action='store', dest='inf', metavar='<folder>', required=True, help='input folder to read document(s)')
-    parser.add_argument('--output', type=str, action='store', dest='ouf', metavar='<folder>', required=True, help='output folder to write document(s)')
-    parser.add_argument('--model', type=str, action='store', dest='mod', metavar='<parameter>', required=True, help='trained word embeddings model')
-    parser.add_argument('--recur', type=util.strtobool, action='store', dest='rec', metavar='<parameter>', required=False, help='[optional] selects type of embeddings is use: [false] word-based or [true] synset-based <default>')
-    parser.add_argument('--abase', type=util.strtobool, action='store', dest='aba', metavar='<parameter>', required=False, help='[optional] selects between [true] Base algorithm <default> or [false] Dijkstra')  
-       
-    args = parser.parse_args()
-         
-    #COMMAND LINE  folder paths
-    input_folder = args.inf
-    output_folder = args.ouf
-    model_folder = args.mod
-    recur_type = args.rec
-    abase_type = args.aba
-       
-    #in/ou relative location - #input/output/model folders are under synset/module/
-    in_foname = os.path.join(ppydir_name,input_folder) 
-    ou_foname = os.path.join(ppydir_name,output_folder)
-    mo_foname = os.path.join(ppydir_name,model_folder)
+    params= CommandLine() #command line parameter validation
+
+    #relative path
+    in_foname = os.path.join(ppydir_name,params.input_folder) 
+    ou_foname = os.path.join(ppydir_name,params.output_folder)
+    mo_foname = os.path.join(ppydir_name,params.model_folder)
     
     #===========================================================================
     # #IDE - Path Definitions
@@ -85,8 +71,8 @@ if __name__ == '__main__':
     #===========================================================================
     
     #Verifying which Token Model to use and 
-    token_model_embeddings = prep.checkModelLoad(mo_foname, recur_type)
-    recurrent_algorithm = prep.checkAlgorithmCost(abase_type) #prevents invalid input
+    token_model_embeddings = prep.checkModelLoad(mo_foname, params.recur_type)
+    recurrent_algorithm = prep.checkAlgorithmCost(params.abase_type) #prevents invalid input
     
     #Input list of documents - one or many folders
     documents_list = prep.doclist_multifolder(in_foname)
@@ -115,7 +101,8 @@ if __name__ == '__main__':
             if (counter%3000==0): print('Document %s - Saved: %s'  %(doc_names[counter],(timedelta(seconds= time.monotonic() - start_time))))
             
         #simple try-catch to avoid documents with few words/null or documents which all items are not in our knowledge database - Skip those documents
-        except IndexError:
+        except:
+            print('Warning: %s was not processed' %doc_names[counter])
             continue
     
     print('finished...')
