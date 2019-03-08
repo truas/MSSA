@@ -24,6 +24,9 @@ COMMAND LINE (wn_manage.py) :
 
 UPDATES:
 ==========
+[2019-03-07]
+1. Moving project from personal repository and renaming it
+
 [2019-01-31]
 1. CommandLine class implemented - Refactor
 
