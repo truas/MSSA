@@ -22,8 +22,16 @@ COMMAND LINE (wn_manage.py) :
 - <--abase> : [OPTIONAL and case sensitive] True (default): Disambiguation via Base MSSA; False - Disambiguation via Dijkstra;
 - <--model>: Word-Embedding (e.g. GoogleNews) OR Synset-Embbedding model used. This should be in .vector format, but it can be changed to binary. Synset-Embbeddings consider the following canonical format: *word#offset#pos* . These are the keys to look up the embeddings.
 
+Models and Corpora:
+==============
+All datasets, training corpora and generated models for the paper "_Multi-Sense embeddings through a word sense disambiguation process_" 
+can be found at [TBD](https://www.google.com) (working on a public repository)
+
 UPDATES:
 ==========
+[2019-03-29]
+1. Included URL for models and datasets used.
+
 [2019-03-07]
 1. Moving project from personal repository and renaming it
 
