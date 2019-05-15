@@ -25,10 +25,13 @@ COMMAND LINE (wn_manage.py) :
 Models and Corpora:
 ==============
 All datasets, training corpora and generated models for the paper "_Multi-Sense embeddings through a word sense disambiguation process_" 
-can be found at [DeepBlue repository](https://deepblue.lib.umich.edu/data/concern/data_sets/jh343s29p?locale=en) (working on a public repository)
+can be found at [DeepBlue repository](https://deepblue.lib.umich.edu/data/concern/data_sets/jh343s29p?locale=en) 
 
 UPDATES:
 ==========
+[2019-05-15]
+1. Link for the datasets/models included.
+
 [2019-03-29]
 1. Included URL for models and datasets used.
 
